@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FWI Prediction</title>
+
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <style>
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: linear-gradient(to right, #fdfbfb, #ebedee);
+            margin: 0;
+            padding: 0;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 60px auto;
+            background: #fff;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.05);
+        }
+
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 30px;
+        }
+
+        label {
+            display: block;
+            margin: 12px 0 5px;
+            font-weight: 600;
+        }
+
+        input[type="number"],
+        select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            font-size: 15px;
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        button {
+            flex: 1;
+            padding: 12px;
+            background: linear-gradient(to right, #007bff, #00c6ff);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background 0.3s ease;
+        }
+
+        button:hover {
+            background: linear-gradient(to right, #0056b3, #009edb);
+        }
+
+        .clear-btn {
+            background: linear-gradient(to right, #e74c3c, #ff6e6e);
+        }
+
+        .clear-btn:hover {
+            background: linear-gradient(to right, #c0392b, #ff4e4e);
+        }
+
+        .result {
+            margin-top: 30px;
+            padding: 20px;
+            background: #f1fff1;
+            border-left: 5px solid #28a745;
+            border-radius: 10px;
+            animation: fadeIn 0.6s ease-in-out;
+        }
+
+        .result strong {
+            color: #28a745;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        ul {
+            padding-left: 20px;
+        }
+
+        ul li {
+            margin: 6px 0;
+        }
+    </style>
+
+    <script>
+        function clearForm() {
+            const form = document.getElementById("fwiForm");
+            form.querySelectorAll("input[type='number']").forEach(input => input.value = "");
+            form.querySelectorAll("select").forEach(select => select.selectedIndex = 0);
+            const result = document.getElementById("result-section");
+            if (result) result.remove();
+        }
+    </script>
+</head>
+<body>
+    <div class="container">
+        <h1><i class="fas fa-fire"></i> Fire Weather Index (FWI) Prediction</h1>
+
+        <form method="POST" action="/predictdata" id="fwiForm" autocomplete="off">
+
+            <label><i class="fas fa-temperature-high"></i> Temperature (°C)</label>
+            <input type="number" name="Temperature" step="any" min="-10" max="102" required>
+
+            <label><i class="fas fa-tint"></i> Relative Humidity (%)</label>
+            <input type="number" name="RH" step="any" min="0" max="100" required>
+
+            <label><i class="fas fa-wind"></i> Wind Speed (km/h)</label>
+            <input type="number" name="Ws" step="any" min="0" max="150" required>
+
+            <label><i class="fas fa-cloud-rain"></i> Rain (mm)</label>
+            <input type="number" name="Rain" step="any" min="0" required>
+
+            <label><i class="fas fa-leaf"></i> FFMC</label>
+            <input type="number" name="FFMC" step="any" min="0" max="150" required>
+
+            <label><i class="fas fa-burn"></i> DMC</label>
+            <input type="number" name="DMC" step="any" min="0" max="300" required>
+
+            <label><i class="fas fa-fire-alt"></i> ISI</label>
+            <input type="number" name="ISI" step="any" min="0" max="50" required>
+
+            <label><i class="fas fa-layer-group"></i> Classes</label>
+            <select name="Classes" required>
+                <option value="">-- Select Class --</option>
+                <option value="1">1 - Low Risk</option>
+                <option value="2">2 - Moderate</option>
+                <option value="3">3 - High</option>
+                <option value="4">4 - Extreme</option>
+            </select>
+
+            <label><i class="fas fa-map-marker-alt"></i> Region</label>
+            <select name="Region" required>
+                <option value="">-- Select Region --</option>
+                <option value="1">1 - Bejaia</option>
+                <option value="2">2 - Sidi-Bel Abbes</option>
+                <option value="3">3 - Tizi-Ouzou</option>
+            </select>
+
+            <div class="btn-group">
+                <button type="submit"><i class="fas fa-magic"></i> Predict</button>
+                <button type="button" class="clear-btn" onclick="clearForm()"><i class="fas fa-eraser"></i> Clear</button>
+            </div>
+        </form>
+
+        {% if prediction %}
+            <div class="result" id="result-section">
+                <p><strong>Prediction:</strong> {{ prediction }}</p>
+                <p><strong>Entered Inputs:</strong></p>
+                <ul>
+                    <li>Temperature: {{ form_data['Temperature'] }}</li>
+                    <li>RH: {{ form_data['RH'] }}</li>
+                    <li>Wind Speed: {{ form_data['Ws'] }}</li>
+                    <li>Rain: {{ form_data['Rain'] }}</li>
+                    <li>FFMC: {{ form_data['FFMC'] }}</li>
+                    <li>DMC: {{ form_data['DMC'] }}</li>
+                    <li>ISI: {{ form_data['ISI'] }}</li>
+                    <li>Classes: {{ form_data['Classes'] }}</li>
+                    <li>Region: {{ form_data['Region'] }}</li>
+                </ul>
+            </div>
+        {% endif %}
+    </div>
+</body>
+</html>
